@@ -1,0 +1,15 @@
+{
+  "name": "final-boss",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "stats-js": "^1.0.1",
+    "three-gltf-loader": "^1.104.0"
+  }
+}

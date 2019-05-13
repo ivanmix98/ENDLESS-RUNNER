@@ -1,0 +1,175 @@
+<html>
+
+<head>
+    <title>My first three.js app</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.js"></script> <!-- Llibreria del three js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.js"></script> <!-- Per veure el rendiment -->
+    <script src="/GLTFLoader.js"></script> <!-- Llibreria per carregar personatges -->
+    <script>
+
+        var scene = null;
+        var camera = null;
+        var renderer = null;
+        var mixer = null;
+        var stats = null;
+        var clock = null;
+        var model = null;
+        var LEFT = false;
+        var RIGHT = false;
+        var UP = false;
+        var DOWN = false;
+        var ground = null;
+
+        function init3D() {
+            scene = new THREE.Scene(); //La escena és com una capa en Photoshop
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //Necessari per veure les coses
+            clock = new THREE.Clock();
+            //Implementació del visualitzador de rendiment
+            stats = new Stats();
+            stats.showPanel(1);
+            renderer = new THREE.WebGLRenderer();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x2271b3, 1);
+
+            document.body.appendChild(renderer.domElement);
+            stats.domElement.style.position = 'absolute'
+            stats.domElement.style.right = '1px'
+            stats.domElement.style.top = '1px'
+            document.body.appendChild(stats.domElement);
+
+            
+            //suelo
+            var texture = new THREE.TextureLoader().load( 'grasslight-small.jpg' );
+            var geometry = new THREE.PlaneBufferGeometry(500, 500);
+            var material = new THREE.MeshPhongMaterial({ color: 0x35682d, depthWrite: false, map: texture   });
+             ground = new THREE.Mesh(geometry, material);
+            ground.position.set(0, - 5, 0);
+            ground.rotation.x = - Math.PI / 2;
+            ground.material = material;
+            scene.add(ground);
+
+            //luz
+            var light = new THREE.DirectionalLight(0xffffff, 1.3);
+            light.position.set(0, 20, 10);
+
+
+
+            scene.add(light);
+
+            camera.position.y = 3;
+            camera.position.z = 9;
+        }
+
+        //Implementació del personatge
+        function loadNaruto() {
+
+
+            
+
+            var loader = new THREE.GLTFLoader();
+
+            loader.load('/naruto5.glb', function (gltf) {
+                model = gltf.scene;
+                model.position.y = -2;
+                model.rotation.y = 3.2;
+
+
+
+
+                scene.add(model);
+
+
+
+
+
+                mixer = new THREE.AnimationMixer(model);
+                mixer.timeScale = 1.5;
+                mixer.clipAction(gltf.animations[0]).play();
+
+                animate();
+
+            });
+        }
+
+        //Movimiento del pj
+        var move = function () {
+            if (LEFT == true) {
+                model.position.x -= 0.3;
+            }
+            if (RIGHT == true) {
+                model.position.x += 0.3;
+            }
+            if (UP == true) {
+                model.position.z -= 0.3;
+                
+            }
+            if (DOWN == true) {
+                model.position.z += 0.3;
+            }
+        }
+
+        document.onkeydown = function (e) {
+                if (e.keyCode == 37) {
+                    LEFT = true;
+                }
+                if (e.keyCode == 39) {
+                    RIGHT = true;
+                }
+                if (e.keyCode == 38) {
+                    UP = true;
+                }
+                if (e.keyCode == 40) {
+                    DOWN = true;
+                }
+            }
+
+            document.onkeyup = function (e) {
+                if (e.keyCode == 37) LEFT = false;
+                if (e.keyCode == 39) RIGHT = false;
+                if (e.keyCode == 38) UP = false;
+                if (e.keyCode == 40) DOWN = false;
+            }
+
+
+        var animate = function () {
+
+            stats.begin();
+            requestAnimationFrame(animate);
+
+
+            var delta = clock.getDelta();
+            if (mixer != null) {
+                mixer.update(delta);
+            };
+            renderer.render(scene, camera);
+            stats.end();
+            
+            move();
+        }
+
+
+
+        init3D();
+        loadNaruto();
+
+
+    </script>
+</body>
+
+</html>
