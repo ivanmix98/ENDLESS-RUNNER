@@ -15,20 +15,67 @@
  */
 var express = require('express');
 var app = express();
+var MongoClient = require('mongodb').MongoClient;
+var assert = require('assert');
+
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {
-  res.send('index.html');
+  res.sendFile('menu/index.html');
 });
 
-
-
-
-
-app.get('/xd', function (req, res) {
-  res.send('GLTFLoader.js');
+app.get('/game', function (req, res) {
+  res.sendFile(__dirname +'/public/game.html');
 });
 
+app.get('/ranking', function (req, res) {
+  var rutadb = 'mongodb://localhost:27017';
+  MongoClient.connect(rutadb, function (err, client) {
+  assert.equal(null, err);
+  console.log("Connexió correcta");
+  var db = client.db('runner');
+  res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8"
+          });
+          console.log("consulta document a col·lecció ranking");
+
+          var cursor = db.collection('ranking').find({});
+
+          res.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+          <link rel="stylesheet" href="menu/css/style.css">
+          </head>
+          <body body background="menu/menu.PNG">
+          <div id="main" style="    height: 20%;">
+          <div id="menus">
+          <h1 style="text-align:center" class="italic">RANKING</h1>`);
+         
+          cursor.each(function (err, doc) {
+              assert.equal(err, null);
+              if (doc != null) {
+                
+                res.write('<p style="text-align: center; font-family: overwatch;src: url(https://us.battle.net/forums/static/fonts/f014015d/f014015d.woff);">' + doc.nom + ' ' + doc.score + '</p><br>');
+              }
+              else {
+                res.end();
+                  client.close();
+              }
+          });
+          res.write(`
+          <div class="normal">
+          <a style="text-decoration: none; color:red;" href="/">MENÚ</a>
+          </div>
+          </div>
+    </div>
+    </body>
+    </html>
+    `);
+      });
+});
 
 app.listen(3000, function () {
   console.log('Servidor escoltant port 3000');

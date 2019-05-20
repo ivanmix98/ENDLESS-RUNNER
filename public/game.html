@@ -1,0 +1,849 @@
+<html>
+
+<head>
+    <title>My first three.js app</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+    </style>
+    <embed src="game.mp3" autostart="true" loop="true" hidden="true"></embed>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.js"></script> <!-- Llibreria del three js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.js"></script> <!-- Per veure el rendiment -->
+    <script src="/js/SkeletonUtils.js"></script> <!-- Llibreria per clonar personatges -->
+    <script src="/js/GLTFLoader.js"></script> <!-- Llibreria per carregar personatges -->
+    <script>
+
+        var scene = null;
+        var camera = null;
+        var renderer = null;
+        var mixer = null;
+        var stats = null;
+        var clock = null;
+        var model = null;
+        var model2 = null;
+        var model2b = null;
+        var model2c = null;
+        var modelc = null;
+        var sphere = null;
+        var LEFT = false;
+        var RIGHT = false;
+        var jump = false;
+        var ground = null;
+        var bgScene = null;
+        var bgCam = null;
+        var vida = 10;
+        var monedas = 9000;
+        var muerte = false;
+        var confirmarmuerte = false;
+        var randomtronco = null;
+        var randomroca = null;
+        var randomring = null;
+        var kyubi = false;
+        var confirmarkyubi = false;
+        var invencibilidad = false;
+
+        function init3D() {
+            scene = new THREE.Scene(); //La escena és com una capa en Photoshop
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //Necessari per veure les coses
+            clock = new THREE.Clock();
+            //Implementació del visualitzador de rendiment
+            stats = new Stats();
+            stats.showPanel(1);
+            renderer = new THREE.WebGLRenderer();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0xffffff, 0);
+
+            document.body.appendChild(renderer.domElement);
+            stats.domElement.style.position = 'absolute'
+            stats.domElement.style.right = '1px'
+            stats.domElement.style.top = '1px'
+            document.body.appendChild(stats.domElement);
+
+            //fondo
+            var backgroundTexture = new THREE.TextureLoader().load('/img/sky2.png');
+            var bg = new THREE.Mesh(
+                new THREE.PlaneGeometry(2, 2, 0),
+                new THREE.MeshBasicMaterial({ map: backgroundTexture })
+            );
+
+
+            bg.material.depthTest = false;
+            bg.material.depthWrite = false;
+
+            bgScene = new THREE.Scene();
+            bgCam = new THREE.Camera();
+            bgScene.add(bgCam);
+            bgScene.add(bg);
+            //suelo
+            var texture = new THREE.TextureLoader().load('/img/grass3.jpg');
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.offset.set(0, 0);
+            texture.repeat.set(5, 5);
+            var geometry = new THREE.CylinderGeometry(6, 6, 30, 42);
+            var material = new THREE.MeshPhongMaterial({ color: 0x35682d, depthWrite: false, map: texture });
+            ground = new THREE.Mesh(geometry, material);
+            //ground.position.set(0, - 4, -2);
+            //ground.rotation.x = - Math.PI / 2;
+            ground.position.y = -3;
+            ground.rotation.z = 1.56;
+            ground.position.z = 4;
+            ground.material = material;
+            scene.add(ground);
+
+            //luz
+            var light = new THREE.AmbientLight(0xffffff, 1.9);
+            light.position.set(50, 50, 50);
+            scene.add(light);
+
+            camera.position.y = 3;
+            camera.position.z = 9;
+
+
+        }
+
+        //Implementació del personatge
+        function loadNarutoRun() {
+
+            var loader = new THREE.GLTFLoader();
+            var actions = {};
+            loader.load('/glb/narutoRun.glb', function (gltf) {
+                model = gltf.scene;
+                model.position.y = -2;
+                model.rotation.y = 3.2;
+                scene.add(model);
+
+                mixer = new THREE.AnimationMixer(model);
+                mixer.timeScale = 1.5;
+
+                mixer.clipAction(gltf.animations[0]).play();
+
+                animate();
+
+            });
+        }
+
+        function loadNarutoRunB() {
+
+            var loader = new THREE.GLTFLoader();
+            var actions = {};
+            loader.load('/glb/narutoRun.glb', function (gltf) {
+                model = gltf.scene;
+                model.position.y = -2;
+                model.rotation.y = 3.2;
+                model.position.x = modelc.position.x;
+                scene.add(model);
+
+                mixer = new THREE.AnimationMixer(model);
+                mixer.timeScale = 1.5;
+
+                mixer.clipAction(gltf.animations[0]).play();
+
+
+
+            });
+        }
+
+        function loadNarutoKyubi() {
+
+            var loader = new THREE.GLTFLoader();
+            var actions = {};
+            loader.load('/glb/narutoKyubi.glb', function (gltf) {
+                modelc = gltf.scene;
+                modelc.position.y = -2;
+                modelc.rotation.y = 3.2;
+                modelc.position.x = model.position.x;
+
+                modelc.traverse((node) => {
+                    if (!node.isMesh) return;
+                    node.material.wireframe = true;
+                });
+
+                scene.add(modelc);
+
+                mixer = new THREE.AnimationMixer(modelc);
+                mixer.timeScale = 1.5;
+
+                mixer.clipAction(gltf.animations[0]).play();
+
+
+
+            });
+        }
+
+        function loadNarutoDeath() {
+
+            var loader = new THREE.GLTFLoader();
+            var actions = {};
+            loader.load('/glb/narutoDeath.glb', function (gltf) {
+                modelb = gltf.scene;
+                modelb.position.y = -2;
+                modelb.rotation.y = 3.2;
+                modelb.position.x = model.position.x;
+                scene.add(modelb);
+
+                mixer = new THREE.AnimationMixer(modelb);
+                mixer.timeScale = 1.5;
+
+                var xd = mixer.clipAction(gltf.animations[0]);
+                xd.setLoop(THREE.LoopOnce);
+                xd.clampWhenFinished = true;
+                xd.play();
+
+
+
+            });
+        }
+
+        function loadTronco() {
+
+            var loader2 = new THREE.GLTFLoader();
+
+            loader2.load('/glb/tronco.glb', function (gltf2) {
+                model2 = gltf2.scene;
+                model2.position.y = -2;
+                model2.position.z = -210;
+                model2.rotation.y = 1.4;
+                model2.scale.set(1, 2, 2);
+
+                randomtronco = Math.floor(Math.random() * (20 - -20)) + -20;
+                model2.position.x = randomtronco;
+
+                scene.add(model2);
+
+                //clones
+                model2b = THREE.SkeletonUtils.clone(model2);
+                model2b.position.z = -212;
+                model2b.position.x = model2.position.x;
+                scene.add(model2b);
+
+                model2c = THREE.SkeletonUtils.clone(model2);
+                model2c.position.z = -214;
+                model2c.position.x = model2.position.x;
+                scene.add(model2c);
+
+                //clones de clones
+                model2d = THREE.SkeletonUtils.clone(model2);
+                model2d.position.z = -250;
+                randomtronco = Math.floor(Math.random() * (20 - -20)) + -20;
+                model2d.position.x = randomtronco;
+                scene.add(model2d);
+
+                model2e = THREE.SkeletonUtils.clone(model2);
+                model2e.position.z = -252;
+                model2e.position.x = model2d.position.x;
+                scene.add(model2e);
+
+                model2f = THREE.SkeletonUtils.clone(model2);
+                model2f.position.z = -254;
+                model2f.position.x = model2d.position.x;
+                scene.add(model2f);
+
+                //clones de clones de clones
+
+                model2g = THREE.SkeletonUtils.clone(model2);
+                model2g.position.z = -290;
+                randomtronco = Math.floor(Math.random() * (20 - -20)) + -20;
+                model2g.position.x = randomtronco;
+                scene.add(model2g);
+
+                model2h = THREE.SkeletonUtils.clone(model2);
+                model2h.position.z = -292;
+                model2h.position.x = model2g.position.x;
+                scene.add(model2h);
+
+                model2i = THREE.SkeletonUtils.clone(model2);
+                model2i.position.z = -294;
+                model2i.position.x = model2h.position.x;
+                scene.add(model2i);
+
+                //clones de clones de clones de clones
+
+                model2j = THREE.SkeletonUtils.clone(model2);
+                model2j.position.z = -340;
+                randomtronco = Math.floor(Math.random() * (20 - -20)) + -20;
+                model2j.position.x = randomtronco;
+                scene.add(model2j);
+
+                model2k = THREE.SkeletonUtils.clone(model2);
+                model2k.position.z = -342;
+                model2k.position.x = model2j.position.x;
+                scene.add(model2k);
+
+                model2l = THREE.SkeletonUtils.clone(model2);
+                model2l.position.z = -344;
+                model2l.position.x = model2j.position.x;
+                scene.add(model2l);
+
+            });
+        }
+
+        function loadRing() {
+
+            var geometry = new THREE.SphereGeometry(0.4, 15, 15);
+            var material = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.5 });
+            sphere = new THREE.Mesh(geometry, material);
+
+            sphere.position.z = -80;
+            sphere.rotation.y = 1.4;
+
+            scene.add(sphere);
+            randomring = Math.floor(Math.random() * (10 - -10)) + -10;
+            sphere.position.x = randomring;
+
+            //clones
+            sphereb = new THREE.Mesh(geometry, material);
+            sphereb.position.z = -82;
+            sphereb.position.x = sphere.position.x;
+            scene.add(sphereb);
+
+            spherec = new THREE.Mesh(geometry, material);
+            spherec.position.z = -84;
+            spherec.position.x = sphere.position.x;
+            scene.add(spherec);
+
+            //clones de clones
+            sphered = new THREE.Mesh(geometry, material);
+            sphered.position.z = -86;
+            sphered.position.x = sphere.position.x;
+            scene.add(sphered);
+
+            spheree = new THREE.Mesh(geometry, material);
+            spheree.position.z = -88;
+            spheree.position.x = sphere.position.x;
+            scene.add(spheree);
+
+            spheref = new THREE.Mesh(geometry, material);
+            spheref.position.z = -90;
+            spheref.position.x = sphere.position.x;
+            scene.add(spheref);
+
+
+        }
+
+        function invencible() {
+            scene.remove(modelc);
+            monedas = 0;
+            loadNarutoRunB();
+            invencibilidad = false;
+
+        }
+
+        //Movimiento del pj
+        var move = function () {
+            if (LEFT == true) {
+                if (model.position.x >= -10) {
+                    model.position.x -= 0.3;
+                }
+                if (modelc.position.x >= -10) {
+                    modelc.position.x -= 0.3;
+                }
+            }
+            if (RIGHT == true) {
+                if (model.position.x <= 10) {
+                    model.position.x += 0.3;
+                }
+                if (modelc.position.x <= 10) {
+                    modelc.position.x += 0.3;
+                }
+            }
+            if (jump == true) {
+
+            }
+            // if (DOWN == true) { model.position.z += 0.3; }
+        }
+
+
+        document.onkeydown = function (e) {
+            if (e.keyCode == 37) {
+                LEFT = true;
+            }
+            if (e.keyCode == 39) {
+                RIGHT = true;
+            }
+            if (e.keyCode == 32) {
+                jump = true;
+            }
+
+        }
+
+        document.onkeyup = function (e) {
+            if (e.keyCode == 37) LEFT = false;
+            if (e.keyCode == 39) RIGHT = false;
+            if (e.keyCode == 32) jump = false;
+        }
+
+
+        var animate = function () {
+
+            stats.begin();
+            requestAnimationFrame(animate);
+
+
+            var delta = clock.getDelta();
+            if (mixer != null) {
+                mixer.update(delta);
+            };
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.render(bgScene, bgCam);
+            renderer.render(scene, camera);
+            stats.end();
+            if (vida >= 1 && invencibilidad != true) {
+                ground.rotation.x += 0.02; //giro del suelo
+            }
+            if (vida >= 1 && invencibilidad != false) {
+                ground.rotation.x += 0.06;
+            }
+
+            infoText.innerHTML = "HP:" + vida + "<br>Score: " + score + "<br>Energy: " + monedas;
+
+            troncoAnimation();
+            if (vida != 0) {
+                ringAnimation();
+                //  por si quieres que  un objeto pare al morir
+            }
+
+            if (invencibilidad != true) {
+                colision();
+            }
+
+            if (muerte != false && confirmarmuerte == false) {
+                console.log("funciona muerte");
+                loadNarutoDeath();
+                confirmarmuerte = true;
+                var registro = document.createElement('div');
+                infoText.style.position = 'absolute';
+                infoText.style.width = 100;
+                infoText.style.height = 100;
+                infoText.style.backgroundColor = "yellow";
+                infoText.innerHTML = "<p style=''></p>GAME OVER<br><a></a>";
+                infoText.style.top = 10 + 'px';
+                infoText.style.left = 10 + 'px';
+                document.body.appendChild(infoText);
+            }
+
+            if (kyubi != false && confirmarkyubi == false) {
+                if (kyubi == true) {
+                    console.log("funciona kyubi");
+                    loadNarutoKyubi();
+
+                    invencibilidad = true;
+                    setTimeout(invencible, 15000);
+                    confirmarkyubi = true;
+                }
+            }
+
+            move();
+        }
+
+
+        var infoText = document.createElement('div');
+
+        var score = 0;
+        infoText.style.position = 'absolute';
+        infoText.style.width = 100;
+        infoText.style.height = 100;
+        infoText.style.backgroundColor = "yellow";
+        infoText.innerHTML = "HP: " + vida + "<br>Score: " + score + "<br>Energy: " + monedas;
+        infoText.style.top = 10 + 'px';
+        infoText.style.left = 10 + 'px';
+        document.body.appendChild(infoText);
+
+        function colision() {
+
+            var troncoPos = new THREE.Vector3();
+
+            troncoPos.setFromMatrixPosition(model2.matrixWorld);
+            if (troncoPos.distanceTo(model.position) <= 3.5) {
+                // console.log("hit");
+
+                if (vida <= 0) {
+                    clearInterval(sumarscore);
+                    scene.remove(model);
+                    muerte = true;
+                    console.log(muerte);
+                } else {
+                    vida -= 2;
+
+                }
+            }
+
+            var troncoPos2 = new THREE.Vector3();
+
+            troncoPos2.setFromMatrixPosition(model2d.matrixWorld);
+            if (troncoPos2.distanceTo(model.position) <= 3.5) {
+                // console.log("hit");
+
+                if (vida <= 0) {
+                    clearInterval(sumarscore);
+                    scene.remove(model);
+                    muerte = true;
+                    console.log(muerte);
+                } else {
+                    vida -= 2;
+
+                }
+            }
+
+            var troncoPos3 = new THREE.Vector3();
+
+            troncoPos3.setFromMatrixPosition(model2g.matrixWorld);
+            if (troncoPos3.distanceTo(model.position) <= 3.5) {
+                // console.log("hit");
+
+                if (vida <= 0) {
+                    clearInterval(sumarscore);
+                    scene.remove(model);
+                    muerte = true;
+                    console.log(muerte);
+                } else {
+                    vida -= 2;
+
+                }
+            }
+
+            var troncoPos4 = new THREE.Vector3();
+
+            troncoPos4.setFromMatrixPosition(model2j.matrixWorld);
+            if (troncoPos4.distanceTo(model.position) <= 3.5) {
+                // console.log("hit");
+
+                if (vida <= 0) {
+                    clearInterval(sumarscore);
+                    scene.remove(model);
+                    muerte = true;
+                    console.log(muerte);
+                } else {
+                    vida -= 2;
+
+                }
+            }
+
+            var monedaPos = new THREE.Vector3();
+            monedaPos.setFromMatrixPosition(sphere.matrixWorld);
+            if (monedaPos.distanceTo(model.position) <= 2.5) {
+                if (monedas >= 10000) {
+                    scene.remove(model);
+                    kyubi = true;
+
+                    for (var i = 0; i <= 15; i++) {
+                        setTimeout(function () { score += 11462;; }, 500 * (i + 1));
+                    }
+
+                } else {
+                    scene.remove(sphere);
+                    monedas++;
+                    score += 100;
+                }
+            }
+
+            var monedaPos2 = new THREE.Vector3();
+            monedaPos2.setFromMatrixPosition(sphereb.matrixWorld);
+            if (monedaPos2.distanceTo(model.position) <= 2.5) {
+                if (monedas >= 10000) {
+                    //modo kyubi
+                    scene.remove(model);
+                    kyubi = true;
+                    for (var i = 0; i <= 15; i++) {
+                        setTimeout(function () { score += 11462;; }, 500 * (i + 1));
+                    }
+                } else {
+                    scene.remove(sphereb);
+                    monedas++;
+                    score += 100;
+                }
+            }
+
+            var monedaPos3 = new THREE.Vector3();
+            monedaPos3.setFromMatrixPosition(spherec.matrixWorld);
+            if (monedaPos3.distanceTo(model.position) <= 2.5) {
+                if (monedas >= 10000) {
+                    //modo kyubi
+                    scene.remove(model);
+                    kyubi = true;
+                    for (var i = 0; i <= 15; i++) {
+                        setTimeout(function () { score += 11462;; }, 500 * (i + 1));
+                    }
+                } else {
+                    scene.remove(spherec);
+                    monedas++;
+                    score += 100;
+                }
+            }
+
+            var monedaPos4 = new THREE.Vector3();
+            monedaPos4.setFromMatrixPosition(sphered.matrixWorld);
+            if (monedaPos4.distanceTo(model.position) <= 2.5) {
+                if (monedas >= 10000) {
+                    //modo kyubi
+                    scene.remove(model);
+                    kyubi = true;
+                    for (var i = 0; i <= 15; i++) {
+                        setTimeout(function () { score += 11462;; }, 500 * (i + 1));
+                    }
+                } else {
+                    scene.remove(sphered);
+                    monedas++;
+                    score += 100;
+                }
+            }
+
+            var monedaPos5 = new THREE.Vector3();
+            monedaPos5.setFromMatrixPosition(spheree.matrixWorld);
+            if (monedaPos5.distanceTo(model.position) <= 2.5) {
+                if (monedas >= 10000) {
+                    //modo kyubi
+                    scene.remove(model);
+                    kyubi = true;
+                    for (var i = 0; i <= 15; i++) {
+                        setTimeout(function () { score += 11462;; }, 500 * (i + 1));
+                    }
+                } else {
+                    scene.remove(spheree);
+                    monedas++;
+                    score += 100;
+                }
+            }
+
+            var monedaPos6 = new THREE.Vector3();
+            monedaPos6.setFromMatrixPosition(spheref.matrixWorld);
+            if (monedaPos6.distanceTo(model.position) <= 2.5) {
+                if (monedas >= 10000) {
+                    //modo kyubi
+                    scene.remove(model);
+                    kyubi = true;
+                    for (var i = 0; i <= 15; i++) {
+                        setTimeout(function () { score += 11462;; }, 500 * (i + 1));
+                    }
+                } else {
+                    scene.remove(spheref);
+                    monedas++;
+                    score += 100;
+                }
+            }
+
+        }
+
+
+        function puntuacion() {
+            score++;
+        }
+
+        // if (vida === 100) {
+        //  clearInterval(sumarscore);
+        // }
+
+        function troncoAnimation() {
+            if (model2.position.z <= 5) {
+                model2.rotation.x += 0.28;
+                model2.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2.position.z = -210;
+                var randomtronco = Math.floor(Math.random() * (20 - -20)) + -20;
+                model2.position.x = randomtronco;
+            }
+
+            if (model2b.position.z <= 5) {
+                model2b.rotation.x += 0.28;
+                model2b.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2b.position.z = model2.position.z - 2;
+                model2b.position.x = model2.position.x;
+            }
+
+            if (model2c.position.z <= 5) {
+                model2c.rotation.x += 0.28;
+                model2c.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2c.position.z = model2b.position.z - 2;
+                model2c.position.x = model2.position.x;
+            }
+            //clones de clones
+            if (model2d.position.z <= 5) {
+                model2d.rotation.x += 0.28;
+                model2d.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2d.position.z = -250;
+                var randomtronco = Math.floor(Math.random() * (20 - -20)) + -20;
+                model2d.position.x = randomtronco;
+            }
+
+            if (model2e.position.z <= 5) {
+                model2e.rotation.x += 0.28;
+                model2e.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2e.position.z = model2d.position.z - 2;
+                model2e.position.x = model2d.position.x;
+            }
+
+            if (model2f.position.z <= 5) {
+                model2f.rotation.x += 0.28;
+                model2f.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2f.position.z = model2e.position.z - 2;
+                model2f.position.x = model2d.position.x;
+            }
+            if (model2g.position.z <= 5) {
+                model2g.rotation.x += 0.28;
+                model2g.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2g.position.z = -290;
+                var randomtronco = Math.floor(Math.random() * (20 - -20)) + -20;
+                model2g.position.x = randomtronco;
+            }
+            if (model2h.position.z <= 5) {
+                model2h.rotation.x += 0.28;
+                model2h.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2h.position.z = model2g.position.z - 2;
+                model2h.position.x = model2g.position.x;
+            }
+            if (model2i.position.z <= 5) {
+                model2i.rotation.x += 0.28;
+                model2i.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2i.position.z = model2h.position.z - 2;
+                model2i.position.x = model2g.position.x;
+            }
+            if (model2j.position.z <= 5) {
+                model2j.rotation.x += 0.28;
+                model2j.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2j.position.z = -340;
+                var randomtronco = Math.floor(Math.random() * (20 - -20)) + -20;
+                model2j.position.x = randomtronco;
+            }
+            if (model2k.position.z <= 5) {
+                model2k.rotation.x += 0.28;
+                model2k.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2k.position.z = model2j.position.z - 2;
+                model2k.position.x = model2j.position.x;
+            }
+            if (model2l.position.z <= 5) {
+                model2l.rotation.x += 0.28;
+                model2l.position.z += 0.6;
+            }
+            else {
+                //scene.remove(model2);
+                model2l.position.z = model2k.position.z - 2;
+                model2l.position.x = model2j.position.x;
+            }
+        }
+
+        function ringAnimation() {
+            if (sphere.position.z <= 5) {
+                sphere.rotation.y += 0.10;
+                sphere.position.z += 0.6;
+            }
+            else {
+                scene.remove(sphere);
+                scene.add(sphere);
+                sphere.position.z = -80;
+                var randomring = Math.floor(Math.random() * (10 - -10)) + -10;
+                sphere.position.x = randomring;
+            }
+
+            if (sphereb.position.z <= 5) {
+                sphereb.rotation.y += 0.10;
+                sphereb.position.z += 0.6;
+            }
+            else {
+                scene.remove(sphereb);
+                scene.add(sphereb);
+                sphereb.position.z = sphere.position.z - 2;
+                sphereb.position.x = sphere.position.x;
+            }
+
+            if (spherec.position.z <= 5) {
+                spherec.rotation.y += 0.10;
+                spherec.position.z += 0.6;
+            }
+            else {
+                scene.remove(spherec);
+                scene.add(spherec);
+                spherec.position.z = sphereb.position.z - 2;
+                spherec.position.x = sphere.position.x;
+            }
+            if (sphered.position.z <= 5) {
+                sphered.rotation.y += 0.10;
+                sphered.position.z += 0.6;
+            }
+            else {
+                scene.remove(sphered);
+                scene.add(sphered);
+                sphered.position.z = spherec.position.z - 2;
+                sphered.position.x = sphere.position.x;
+            }
+            if (spheree.position.z <= 5) {
+                spheree.rotation.y += 0.10;
+                spheree.position.z += 0.6;
+            }
+            else {
+                scene.remove(spheree);
+                scene.add(spheree);
+                spheree.position.z = sphered.position.z - 2;
+                spheree.position.x = sphere.position.x;
+            }
+            if (spheref.position.z <= 5) {
+                spheref.rotation.y += 0.10;
+                spheref.position.z += 0.6;
+            }
+            else {
+                scene.remove(spheref);
+                scene.add(spheref);
+                spheref.position.z = spheree.position.z - 2;
+                spheref.position.x = sphere.position.x;
+            }
+        }
+
+
+
+        init3D();
+        loadTronco();
+        loadRing();
+        var sumarscore = setInterval(puntuacion, 1000);
+        loadNarutoRun();
+
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>
