@@ -86,8 +86,26 @@ function highlight(element, event,surl) {
 "<embed src=\""+surl+"\" hidden=\"true\" autostart=\"true\" loop=\"false\" />";
 }
 
+var y = document.getElementById('bigpic');
 function controles(){
-  document.getElementById('bigpic').style.display='block';
+  
+  if (y.style.display === "none") {
+    y.style.display = "block";
+    x.style.display = "none";
+  } else {
+    y.style.display = "none";
+  }
+}
+
+var x = document.getElementById("myDIV");
+function creditos(){
+  
+  if (x.style.display === "none") {
+    x.style.display = "block";
+    y.style.display = "none";
+  } else {
+    x.style.display = "none";
+  }
 }
 
 document.getElementById('main').onmouseover = function() {

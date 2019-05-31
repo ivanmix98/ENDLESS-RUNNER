@@ -11,6 +11,38 @@
             width: 100%;
             height: 100%
         }
+
+        .gameover {
+            border-radius: 17px 17px 17px 17px;
+            -moz-border-radius: 17px 17px 17px 17px;
+            -webkit-border-radius: 17px 17px 17px 17px;
+            border: 9px inset #000000;
+            text-align: center;
+        }
+
+        .info {
+            text-align: center;
+            margin-top: 9%;
+            font-family: 'njnaruto-webfont', Arial, sans-serif;
+            font-size: 20px;
+        }
+
+        .p1 {
+            padding-top: 4%;
+        }
+
+        @font-face {
+            font-family: "njnaruto-webfont";
+            src: url("fonts/njnaruto-webfont.woff") format("woff")
+        }
+
+        * {
+            cursor: url(https://cdn.discordapp.com/attachments/303406782104207362/315839175406649345/Overwatch.cur), auto;
+            -moz-user-select: -moz-none;
+            -ms-user-select: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
     </style>
     <embed src="game.mp3" autostart="true" loop="true" hidden="true"></embed>
 </head>
@@ -40,7 +72,7 @@
         var ground = null;
         var bgScene = null;
         var bgCam = null;
-        var vida = 10;
+        var vida = 100;
         var monedas = 9000;
         var muerte = false;
         var confirmarmuerte = false;
@@ -51,9 +83,14 @@
         var confirmarkyubi = false;
         var invencibilidad = false;
 
+        var sound = null;
+
         function init3D() {
             scene = new THREE.Scene(); //La escena és com una capa en Photoshop
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //Necessari per veure les coses
+            var listener = new THREE.AudioListener();
+            camera.add(listener);
+            sound = new THREE.Audio(listener);
             clock = new THREE.Clock();
             //Implementació del visualitzador de rendiment
             stats = new Stats();
@@ -108,6 +145,13 @@
             camera.position.y = 3;
             camera.position.z = 9;
 
+            var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('inicio.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
 
         }
 
@@ -403,9 +447,18 @@
             }
             if (vida >= 1 && invencibilidad != false) {
                 ground.rotation.x += 0.06;
+                model2.position.z += 1;
+                model2b.position.z += 1;
+                model2c.position.z += 1;
+                model2d.position.z += 1;
+                model2e.position.z += 1;
+                model2f.position.z += 1;
+                model2g.position.z += 1;
+                model2h.position.z += 1;
+                model2i.position.z += 1;
             }
 
-            infoText.innerHTML = "HP:" + vida + "<br>Score: " + score + "<br>Energy: " + monedas;
+            infoText.innerHTML = "<div class='info'><p class='p1'>" + vida + "</p><p class='p2'>" + score + "</p><p class='p3'>" + monedas + "</p></div>";
 
             troncoAnimation();
             if (vida != 0) {
@@ -421,21 +474,32 @@
                 console.log("funciona muerte");
                 loadNarutoDeath();
                 confirmarmuerte = true;
+
                 var registro = document.createElement('div');
-                infoText.style.position = 'absolute';
-                infoText.style.width = 100;
-                infoText.style.height = 100;
-                infoText.style.backgroundColor = "yellow";
-                infoText.innerHTML = "<p style=''></p>GAME OVER<br><a></a>";
-                infoText.style.top = 10 + 'px';
-                infoText.style.left = 10 + 'px';
-                document.body.appendChild(infoText);
+                registro.style.position = 'absolute';
+
+
+                registro.innerHTML = `<form action='/registre'>
+                                     <input type='hidden' name='score' value='`+ score + `' readonly='readonly' />
+                                     <input type="image" src="menu/gameover.png" alt="Submit Form" />
+                                    </form>`;
+                registro.style.top = 30 + '%';
+                registro.style.left = 30 + '%';
+                document.body.appendChild(registro);
             }
 
             if (kyubi != false && confirmarkyubi == false) {
                 if (kyubi == true) {
                     console.log("funciona kyubi");
                     loadNarutoKyubi();
+
+                    var audioLoader = new THREE.AudioLoader();
+                    audioLoader.load('transform.mp3', function (buffer) {
+                        sound.setBuffer(buffer);
+                        sound.setLoop(false);
+                        sound.setVolume(4);
+                        sound.play();
+                    });
 
                     invencibilidad = true;
                     setTimeout(invencible, 15000);
@@ -451,13 +515,15 @@
 
         var score = 0;
         infoText.style.position = 'absolute';
-        infoText.style.width = 100;
-        infoText.style.height = 100;
-        infoText.style.backgroundColor = "yellow";
-        infoText.innerHTML = "HP: " + vida + "<br>Score: " + score + "<br>Energy: " + monedas;
+        infoText.style.width = 402;
+        infoText.style.height = 200;
+        infoText.style.backgroundImage = "url('menu/info.png')";
+        infoText.innerHTML = "<div class='info'><p class='p1'>" + vida + "</p><p class='p2'>" + score + "</p><p class='p3'>" + monedas + "</p></div>";
         infoText.style.top = 10 + 'px';
         infoText.style.left = 10 + 'px';
         document.body.appendChild(infoText);
+
+
 
         function colision() {
 
@@ -474,7 +540,25 @@
                     console.log(muerte);
                 } else {
                     vida -= 2;
-
+                    var golpe = Math.floor(Math.random() * 2) + 1;
+                    
+                    if (golpe != 1) {
+                        var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('golpe1.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
+                    } else {
+                        var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('golpe2.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
+                    }
                 }
             }
 
@@ -491,7 +575,25 @@
                     console.log(muerte);
                 } else {
                     vida -= 2;
+                    var golpe = Math.floor(Math.random() * 2) + 1;
 
+                    if (golpe != 1) {
+                        var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('golpe1.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
+                    } else {
+                        var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('golpe2.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
+                    }
                 }
             }
 
@@ -508,7 +610,25 @@
                     console.log(muerte);
                 } else {
                     vida -= 2;
+                    var golpe = Math.floor(Math.random() * 2) + 1;
 
+                    if (golpe != 1) {
+                        var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('golpe1.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
+                    } else {
+                        var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('golpe2.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
+                    }
                 }
             }
 
@@ -525,7 +645,25 @@
                     console.log(muerte);
                 } else {
                     vida -= 2;
+                    var golpe = Math.floor(Math.random() * 2) + 1;
 
+                    if (golpe != 1) {
+                        var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('golpe1.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
+                    } else {
+                        var audioLoader = new THREE.AudioLoader();
+                        audioLoader.load('golpe2.mp3', function (buffer) {
+                            sound.setBuffer(buffer);
+                            sound.setLoop(false);
+                            sound.setVolume(4);
+                            sound.play();
+                        });
+                    }
                 }
             }
 
@@ -545,6 +683,15 @@
                     monedas++;
                     score += 100;
                 }
+
+                if(monedas <=9700){
+                var audioLoader = new THREE.AudioLoader();
+                    audioLoader.load('rasengan.mp3', function (buffer) {
+                        sound.setBuffer(buffer);
+                        sound.setLoop(false);
+                        sound.setVolume(4);
+                        sound.play();
+                    }); }
             }
 
             var monedaPos2 = new THREE.Vector3();
